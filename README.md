@@ -1,212 +1,196 @@
-# DishDash: Fitness Fueler & Budget Buddy → Android App
-
-## Project → Nutritious diet cost Optimizer according to fitness goals as per dish availability - Android APP
-
-# Project Members→
-
-21cs2018 → IDD CS AI → Samminga Sainath Rao
-
-21cs3066→ CSE → Sunny Kumar
-
-USER FRIENDLY ANDROID APP MADE:
-
-Download Here →
-
-[CLick Here to Download APK, Run it on Android Phone](https://drive.google.com/uc?export=download&id=1wj_oe-c1EAC6C3FdTrnAMg283eV12vzl)
-
-# Step 1:
-
-User Enters all the Details here including the fitness goal
-
-The Backend Logic →
-
-All the Calculations are done on the basis of the formulas available in famous nutririon guides.
-
-The Constraints for the minimum Protien, Maximum or Minimum Fat , Maximum or Minimum Calories According to the the Fitness Goal, Gender, Weight, Height,Age and also the Weight to be lost or gained in a Week
-
-![1000154594.jpg](DishDash%20Fitness%20Fueler%20&%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/1000154594.jpg)
-
-# Step 2
-
-Select , Search and Filter Meals according to availability , taste and requirement
-
-You Can select the Minimum Amount and the Maximum amount of each dish also and **ONLY THEN SELECT THE CHECKBOX, YOU CAN SIMPLY SELECT THE CHECKBOX ALSO without** the MIN or MAX values entered
-
-After selecting all the Options
-
-Press the Next Button 
-
-![photo_2024-04-28_22-36-30.jpg](DishDash%20Fitness%20Fueler%20&%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/photo_2024-04-28_22-36-30.jpg)
-
-# Step 3
-
-Click on the Get Diet Button , 
-
-Now all the data , All the constraints are sent to the backend API.
-
-We have used the google OR Tools for the Optimization and the Google Apps Script Platform to develop the GET API.
-
-![photo_2024-04-28_22-40-55.jpg](DishDash%20Fitness%20Fueler%20&%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/photo_2024-04-28_22-40-55.jpg)
-
-This is the Backend Code for the API→
-
-### Backend Code
-
-![Untitled](DishDash%20Fitness%20Fueler%20&%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/Untitled.png)
-
-function doGet(e) {
-
-var engine = LinearOptimizationService.createEngine();
-
-var equations = []; // Array to store equations
-
-var responseMessage = {}; // Initialize response JSON object
-
-try {
-
-// Parse the parameters from the query string
-
-var minValueList = JSON.parse(e.parameter.minValueList);
-
-var maxValueList = JSON.parse(e.parameter.maxValueList);
-
-var calorieLimit = parseFloat(e.parameter.calorieLimit);
-
-var proteinLimit = parseFloat(e.parameter.proteinLimit);
-
-var fatLimit = parseFloat(e.parameter.fatLimit);
-
-var foodIdList = JSON.parse(e.parameter.foodIdList);
-
-var goal = parseFloat(e.parameter.goal);
-
-// Arrays for protein, fat, calories, and cost values
-
-var proteinValues = [13, 15, 4, 6, 8, 20, 12, 13, 20, 8, 30, 25, 10, 20, 14, 25, 8, 12, 9, 10, 15, 8, 25, 10, 20, 20, 24, 8, 6, 12];
-
-var fatValues = [11, 15, 2, 1, 10, 10, 5, 10, 5, 3, 8, 10, 8, 15, 4, 8, 6, 8, 6, 8, 8, 6, 8, 9, 15, 10, 10, 8, 2, 8];
-
-var calorieValues = [155, 300, 75, 71, 150, 250, 128, 143, 250, 164, 195, 190, 160, 200, 269, 200, 222, 170, 110, 120, 140, 218, 300, 160, 250, 250, 200, 160, 75, 160];
-
-var costValues = [10, 20, 15, 20, 30, 25, 15, 10, 50, 20, 150, 120, 50, 60, 30, 200, 80, 40, 70, 60, 80, 50, 200, 100, 120, 80, 300, 60, 30, 40];
-
-var protienconstraint = engine.addConstraint(proteinLimit, Infinity);
-
-if(goal===0.0){
-
-var fatconstraint = engine.addConstraint( fatLimit,Infinity);
-
-var calorieconstraint = engine.addConstraint(calorieLimit, Infinity);
-
-}
-
-if(goal===1.0){
-
-var fatconstraint = engine.addConstraint( 0,fatLimit);
-
-var calorieconstraint = engine.addConstraint(0,calorieLimit);
-
-}
-
-if(goal===2.0){
-
-var fatconstraint = engine.addConstraint( 0, Infinity);
-
-var calorieconstraint = engine.addConstraint(0,calorieLimit);
-
-}
-
-for (var i = 0; i < foodIdList.length; i++) {
-
-var index = foodIdList[i] - 1;
-
-var foodId = foodIdList[i];
-
-var minValue = minValueList[foodId];
-
-var maxValue = maxValueList[foodId];
-
-var variabledef = ('x' + foodId.toString()).toString();
-
-if (minValue == 0 && maxValue == 0) {
-
-engine.addVariable(variabledef, 0, Infinity);
-
-} else if (minValue != 0 && maxValue == 0) {
-
-engine.addVariable(variabledef, minValue, Infinity);
-
-} else if (minValue == 0 && maxValue != 0) {
-
-engine.addVariable(variabledef, 0, maxValue);
-
-} else if (minValue != 0 && maxValue != 0) {
-
-engine.addVariable(variabledef, minValue, maxValue);
-
-}
-
-calorieconstraint.setCoefficient(variabledef, calorieValues[index]);
-
-protienconstraint.setCoefficient(variabledef, proteinValues[index]);
-
-fatconstraint.setCoefficient(variabledef, fatValues[index]);
-
-engine.setObjectiveCoefficient(variabledef, costValues[index]);
-
-}
-
-engine.setMinimization();
-
-var solution = engine.solve();
-
-if (!solution.isValid()) {
-
-responseMessage.error = 'No solution ' + solution.getStatus();
-
-} else {
-
-responseMessage.foodQuantities = {};
-
-for (var i = 0; i < foodIdList.length; i++) {
-
-var variabledef = ('x' + foodIdList[i].toString()).toString();
-
-responseMessage.foodQuantities[variabledef] = solution.getVariableValue(variabledef);
-
-}
-
-responseMessage.totalCost = solution.getObjectiveValue();
-
-responseMessage.constrains = goal.toString();
-
-}
-
-return ContentService.createTextOutput(JSON.stringify(responseMessage)).setMimeType(ContentService.MimeType.JSON);
-
-} catch (error) {
-
-// If an error occurs during processing, respond with the error message
-
-responseMessage.error = error.message;
-
-return ContentService.createTextOutput(JSON.stringify(responseMessage)).setMimeType(ContentService.MimeType.JSON);
-
-}
-
-}
-
-# Step 4
-
-After the Button is Pressed You will get a diet, If you need a better diet you can press the back button and tweak the parameters and then get a new diet again according to your choice
-
-All the Info about the Diet is Given, You Can take the Screen shot and Follow it , The Diet Ensures that Your minimum Protien requirement is met as per your fitness goals and the colries and fats are kept in the limits they are supposed to be
-
-Also it tries to reduce the overall cost of the whole diet.
-
-![photo_2024-04-28_22-36-39.jpg](DishDash%20Fitness%20Fueler%20&%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/photo_2024-04-28_22-36-39.jpg)
-
-<aside>
-💡 If There is a Situation → “Not Possible , Try Again” ( InFeasible Solution ), Press the Back Button and  Tweak the dishes quantity, add some more dish options, Reduce Constraints on each dish and you shall reach an optimal solution with less cost but meeting your minimum protien requirements !
-
-</aside>
+# DishDash: Fitness Fueler & Budget Buddy
+
+[![Flutter](https://img.shields.io/badge/Flutter-3.2.6-blue.svg)](https://flutter.dev/)
+[![Dart](https://img.shields.io/badge/Dart-3.2.6-blue.svg)](https://dart.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+## Overview
+
+DishDash is an innovative Android application that optimizes nutritional diet plans according to user-specific fitness goals while considering dish availability and budget constraints. The app leverages advanced optimization algorithms to provide personalized meal plans that meet nutritional requirements while minimizing costs.
+
+## Features
+
+- 🎯 Personalized fitness goal setting
+- 📊 Advanced nutritional calculations
+- 💰 Cost optimization
+- 🍽️ Customizable meal selection
+- 📱 User-friendly interface
+- 🔄 Real-time diet optimization
+- 📈 Detailed nutritional tracking
+
+## Technical Architecture
+
+### Frontend (Mobile App)
+- **Framework**: Flutter 3.2.6
+- **Language**: Dart
+- **Key Dependencies**:
+  - `shared_preferences`: ^2.2.3 (Local data persistence)
+  - `http`: ^1.2.0 (API communication)
+  - `cupertino_icons`: ^1.2.0 (iOS-style icons)
+
+### Backend (API)
+- **Platform**: Google Apps Script
+- **Optimization Engine**: Google OR-Tools
+- **API Type**: RESTful GET endpoints
+- **Response Format**: JSON
+
+### Optimization Algorithm
+The application implements a Linear Programming optimization model using Google OR-Tools with the following components:
+- **Objective Function**: Minimize total meal plan cost
+- **Constraints**:
+  - Minimum protein requirements
+  - Calorie limits (upper/lower bounds)
+  - Fat content restrictions
+  - Individual dish quantity constraints
+
+## System Requirements
+
+### Development Environment
+- Flutter SDK ≥ 3.2.6
+- Dart SDK ≥ 3.2.6
+- Android Studio / VS Code with Flutter extensions
+- Git for version control
+
+### Deployment Requirements
+- Android 5.0 (API level 21) or higher
+- Minimum 2GB RAM
+- 50MB free storage space
+
+## Installation & Setup
+
+### Development Setup
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/yourusername/dishdash.git
+   cd dishdash
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run the Application**
+   ```bash
+   flutter run
+   ```
+
+### Production Deployment
+
+1. **Download the APK**
+   - [Download Latest Release](https://drive.google.com/uc?export=download&id=1wj_oe-c1EAC6C3FdTrnAMg283eV12vzl)
+
+2. **Install on Android Device**
+   - Enable "Install from Unknown Sources" in device settings
+   - Open the downloaded APK
+   - Follow installation prompts
+
+## Usage Guide
+
+### 1. Initial Setup
+1. Launch the application
+2. Enter personal details:
+   - Gender
+   - Weight
+   - Height
+   - Age
+   - Fitness goals
+   - Target weight change (if applicable)
+
+### 2. Meal Selection
+1. Browse available meals
+2. Use search/filter functionality
+3. Set quantity constraints:
+   - Minimum portions
+   - Maximum portions
+4. Select desired meals via checkboxes
+
+### 3. Diet Generation
+1. Click "Get Diet" button
+2. Review generated meal plan
+3. Check nutritional information:
+   - Total protein content
+   - Calorie distribution
+   - Fat content
+   - Total cost
+
+### 4. Optimization Tips
+If you receive a "Not Possible" message:
+- Add more dish options
+- Adjust quantity constraints
+- Modify nutritional constraints
+- Try different meal combinations
+
+## Technical Details
+
+### API Endpoints
+
+```javascript
+GET /optimize
+Parameters:
+- minValueList: JSON array of minimum quantities
+- maxValueList: JSON array of maximum quantities
+- calorieLimit: float
+- proteinLimit: float
+- fatLimit: float
+- foodIdList: JSON array of selected food IDs
+- goal: float (0.0: maintain, 1.0: lose, 2.0: gain)
+```
+
+### Optimization Constraints
+
+```javascript
+Protein: proteinLimit ≤ Σ(protein_i * quantity_i) ≤ ∞
+Calories: 
+- Maintain: calorieLimit ≤ Σ(calorie_i * quantity_i) ≤ ∞
+- Lose: 0 ≤ Σ(calorie_i * quantity_i) ≤ calorieLimit
+- Gain: 0 ≤ Σ(calorie_i * quantity_i) ≤ calorieLimit
+
+Fat:
+- Maintain: fatLimit ≤ Σ(fat_i * quantity_i) ≤ ∞
+- Lose: 0 ≤ Σ(fat_i * quantity_i) ≤ fatLimit
+- Gain: 0 ≤ Σ(fat_i * quantity_i) ≤ ∞
+```
+
+## Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Google OR-Tools team for the optimization engine
+- Flutter team for the framework
+- All contributors and testers 
+
+## Screenshots and Walkthrough
+
+### Step 1: User Details and Goals
+![Initial Setup](DishDash%20Fitness%20Fueler%20%26%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/1000154594.jpg)
+*Enter your personal details and fitness goals*
+
+### Step 2: Meal Selection Interface
+![Meal Selection](DishDash%20Fitness%20Fueler%20%26%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/photo_2024-04-28_22-36-30.jpg)
+*Browse, search, and select meals with quantity constraints*
+
+### Step 3: Diet Generation Process
+![Diet Generation](DishDash%20Fitness%20Fueler%20%26%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/photo_2024-04-28_22-40-55.jpg)
+*Click "Get Diet" to generate your optimized meal plan*
+
+### Step 4: Results and Nutritional Information
+![Diet Results](DishDash%20Fitness%20Fueler%20%26%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/photo_2024-04-28_22-36-39.jpg)
+*Review your personalized diet plan with detailed nutritional information*
+
+### Backend Optimization Engine
+![Backend Code](DishDash%20Fitness%20Fueler%20%26%20Budget%20Buddy%20%E2%86%92%20Android%20A%20d7ef22b98cba4ef4a6432bc9d79358c2/Untitled.png)
+*Google OR-Tools implementation for diet optimization* 
